@@ -1,0 +1,16 @@
+const GROUPS = [
+  { name: "文具",   url: "https://d03280112-sketch.github.io/pen/" },
+  { name: "水果",   url: "https://d03280112-sketch.github.io/-fruit/" },
+  { name: "三國",   url: "https://d03280112-sketch.github.io/Three-Kingdoms/" },
+  { name: "台灣",   url: "https://d03280112-sketch.github.io/taiwan/" },
+  { name: "品牌",   url: "https://d03280112-sketch.github.io/brand/" },
+  { name: "成語",   url: "https://d03280112-sketch.github.io/idiom/" },
+  { name: "料理A",  url: "https://d03280112-sketch.github.io/cookA/" },
+  { name: "料理B",  url: "https://d03280112-sketch.github.io/cookB/" },
+  { name: "運動",   url: "https://d03280112-sketch.github.io/sports/" },
+  { name: "零食",   url: "https://d03280112-sketch.github.io/snack/" },
+  { name: "電器",   url: "https://d03280112-sketch.github.io/3C/" },
+  { name: "蔬菜",   url: "https://d03280112-sketch.github.io/vegetable/" },
+  { name: "辦公室", url: "https://d03280112-sketch.github.io/offiice/" },
+  { name: "職業",   url: "https://d03280112-sketch.github.io/Profession/" }
+];
