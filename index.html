@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>主控台｜14 主題抽選</title>
+  <title>主控台｜14 主題抽選（按 Start 才跳轉）</title>
   <style>
     body{
       margin:0;
@@ -14,26 +14,50 @@
     .wrap{max-width:1100px;margin:0 auto;padding:26px;}
     h1{margin:0 0 10px;font-size:30px;}
     .hint{opacity:.8;line-height:1.7}
+
     .panel{
       background:#141414;border:1px solid #2a2a2a;border-radius:18px;
       padding:18px;margin:14px 0;
     }
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
-    button{
-      border:0;border-radius:16px;padding:12px 18px;font-weight:900;cursor:pointer;
-      background:#00e5ff;color:#001015;font-size:18px;
+
+    .topPick{
+      display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;
     }
-    button.secondary{background:#ffd400;color:#1a1200}
-    button.ghost{background:#222;color:#fff;border:1px solid #333}
+    .pickBox{
+      flex:1;
+      min-width:280px;
+      border:1px solid #2a2a2a;
+      border-radius:18px;
+      padding:18px;
+      background:#0f0f0f;
+    }
+    .pickLabel{opacity:.75}
+    .pickName{
+      margin-top:8px;
+      font-size:56px;
+      font-weight:1000;
+      letter-spacing:1px;
+      color:#00e5ff;
+      text-shadow:0 0 18px rgba(0,229,255,.35);
+      line-height:1.1;
+      word-break:break-word;
+    }
+    .pickSub{
+      margin-top:10px;
+      opacity:.85;
+      font-weight:800;
+    }
+
+    .btnRow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    button{
+      border:0;border-radius:16px;padding:14px 18px;font-weight:1000;cursor:pointer;
+      font-size:18px;
+    }
+    #btnPick{background:#00e5ff;color:#001015}
+    #btnStart{background:#ffd400;color:#1a1200}
+    #btnReset{background:#222;color:#fff;border:1px solid #333}
     button:disabled{opacity:.45;cursor:not-allowed}
 
-    .big{
-      font-size:58px;font-weight:1000;letter-spacing:1px;color:#ffd400;
-      text-shadow:0 0 12px rgba(255,212,0,.55);
-      line-height:1;
-    }
-
-    /* 14 主題文字區 */
     .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -41,13 +65,11 @@
       margin-top:12px;
     }
     .topic{
-      position:relative;
       border-radius:18px;
-      padding:22px 16px;
+      padding:20px 16px;
       border:1px solid #2a2a2a;
-      background:#0f0f0f;
-      opacity:.28;                /* 原本暗 */
-      transform:scale(1);
+      background:#101010;
+      opacity:1;                /* 一開始都亮 */
       transition:opacity .12s linear, transform .12s linear, box-shadow .12s linear, border-color .12s linear;
       user-select:none;
       display:flex;
@@ -55,6 +77,7 @@
       justify-content:center;
       min-height:74px;
       text-align:center;
+      position:relative;
     }
     .topic .name{
       font-size:30px;
@@ -66,64 +89,57 @@
       max-width:100%;
     }
 
+    /* 抽選過的：變暗 */
+    .topic.used{
+      opacity:.18;
+      filter:saturate(.6);
+    }
+
+    /* 抽選動畫亮起 */
     .topic.active{
-      opacity:1;
       transform:scale(1.04);
       border-color:#00e5ff;
       box-shadow:0 0 18px rgba(0,229,255,.35);
     }
 
+    /* 抽到結果：恆亮 */
     .topic.locked{
       opacity:1;
       border-color:#ffd400;
-      box-shadow:0 0 26px rgba(255,212,0,.55);
+      box-shadow:0 0 24px rgba(255,212,0,.55);
+      transform:scale(1.03);
     }
 
     .badge{
       position:absolute;top:10px;right:10px;
-      font-size:12px;font-weight:900;
+      font-size:12px;font-weight:1000;
       padding:6px 10px;border-radius:999px;
       background:#222;border:1px solid #333;
       opacity:.9;
     }
+    .topic.used .badge{background:#111;border-color:#222;opacity:.8}
     .topic.locked .badge{background:#1a1200;border-color:#ffd400}
-    .topic.used{opacity:.12;}
-    .topic.used.locked{opacity:1;}
-    .footerRow{
-      display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:flex-start;
-      margin-top:12px;
-    }
-    a.link{color:#00e5ff;text-decoration:none;font-weight:900}
-    a.link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🎲 主控台：14 主題抽選</h1>
   <div class="hint">
-    按「開始抽選」後，主題會隨機亮起又暗下來，約 3.5 秒內逐步放慢並停在抽中的主題（恆亮）。<br/>
-    抽到後會自動跳到該主題頁面。抽過的主題不會再被抽到，直到抽完可按重置。
+    按「抽選」會轉 3.5 秒停住。<br/>
+    抽到後會先顯示在上方並把該主題變暗（已用）。要進入題目請按「Start」才跳轉。
   </div>
 
-  <div class="panel">
-    <div class="row">
-      <div>
-        <div style="opacity:.7">剩餘主題數</div>
-        <div class="big" id="remain">14</div>
-      </div>
-      <div style="min-width:360px">
-        <div style="opacity:.7">本次抽到</div>
-        <div style="font-size:20px;font-weight:1000" id="pickedName">（尚未抽）</div>
-        <div style="margin-top:6px">
-          <a class="link" id="pickedLink" href="#" target="_self" style="display:none">開啟此主題</a>
-        </div>
-      </div>
+  <div class="panel topPick">
+    <div class="pickBox">
+      <div class="pickLabel">目前抽到的選項</div>
+      <div class="pickName" id="pickedName">（尚未抽）</div>
+      <div class="pickSub" id="pickedHint">請先按「抽選」</div>
     </div>
 
-    <div class="footerRow">
-      <button id="btnPick">開始抽選</button>
-      <button class="secondary" id="btnReset">重置（全部回來）</button>
-      <button class="ghost" id="btnOpenLast">開啟上一次抽到的主題</button>
+    <div class="btnRow">
+      <button id="btnPick">抽選</button>
+      <button id="btnStart" disabled>Start（進入題目）</button>
+      <button id="btnReset">重置（全部回來）</button>
     </div>
   </div>
 
@@ -134,7 +150,7 @@
 </div>
 
 <script>
-  // ✅ 14 組網址（只用來跳轉，不在畫面顯示）
+  // 14 組（只顯示 name，不顯示 url）
   const GROUPS = [
     { name: "文具",   url: "https://d03280112-sketch.github.io/pen/" },
     { name: "水果",   url: "https://d03280112-sketch.github.io/-fruit/" },
@@ -152,19 +168,19 @@
     { name: "職業",   url: "https://d03280112-sketch.github.io/Profession/" }
   ];
 
-  const KEY_USED = "quiz_used_groups_v3";
-  const KEY_LAST = "quiz_last_group_v3";
+  const KEY_USED = "all_used_groups_v4";
+  const KEY_LAST = "all_last_pick_v4";
 
-  const elRemain = document.getElementById("remain");
-  const elPickedName = document.getElementById("pickedName");
-  const elPickedLink = document.getElementById("pickedLink");
   const elGrid = document.getElementById("grid");
   const btnPick = document.getElementById("btnPick");
+  const btnStart = document.getElementById("btnStart");
   const btnReset = document.getElementById("btnReset");
-  const btnOpenLast = document.getElementById("btnOpenLast");
+  const elPickedName = document.getElementById("pickedName");
+  const elPickedHint = document.getElementById("pickedHint");
 
   let spinning = false;
   let currentActive = null;
+  let pickedIdx = null; // 本次抽到（但未跳轉）
 
   function loadUsed(){
     try {
@@ -173,6 +189,7 @@
     } catch { return []; }
   }
   function saveUsed(arr){ localStorage.setItem(KEY_USED, JSON.stringify(arr)); }
+
   function saveLast(idx){ localStorage.setItem(KEY_LAST, String(idx)); }
   function loadLast(){
     const v = localStorage.getItem(KEY_LAST);
@@ -189,46 +206,12 @@
     return out;
   }
 
-  function renderGrid(){
-    const used = new Set(loadUsed());
-    const remain = GROUPS.length - used.size;
-    elRemain.textContent = String(remain);
-    btnPick.disabled = (remain <= 0) || spinning;
-
-    elGrid.innerHTML = "";
-    GROUPS.forEach((g, i) => {
-      const div = document.createElement("div");
-      div.className = "topic" + (used.has(i) ? " used" : "");
-      div.dataset.idx = String(i);
-
-      const badge = document.createElement("div");
-      badge.className = "badge";
-      badge.textContent = used.has(i) ? "已抽" : "未抽";
-
-      const name = document.createElement("div");
-      name.className = "name";
-      name.textContent = g.name;
-
-      div.appendChild(badge);
-      div.appendChild(name);
-
-      // 允許點擊直接開啟（測試用）
-      div.addEventListener("click", () => {
-        if (spinning) return;
-        window.location.href = g.url;
-      });
-
-      elGrid.appendChild(div);
-    });
-  }
-
   function clearActive(){
     if (currentActive === null) return;
     const el = elGrid.querySelector(`.topic[data-idx="${currentActive}"]`);
     if (el) el.classList.remove("active");
     currentActive = null;
   }
-
   function setActive(idx){
     if (currentActive === idx) return;
     clearActive();
@@ -237,99 +220,134 @@
     currentActive = idx;
   }
 
-  function lockPicked(idx){
-    const el = elGrid.querySelector(`.topic[data-idx="${idx}"]`);
-    if (el) {
-      el.classList.remove("active");
-      el.classList.add("locked");
+  function render(){
+    const used = new Set(loadUsed());
+    elGrid.innerHTML = "";
+
+    GROUPS.forEach((g,i)=>{
+      const div = document.createElement("div");
+      div.className = "topic" + (used.has(i) ? " used" : "");
+      div.dataset.idx = String(i);
+
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = used.has(i) ? "已選" : "可選";
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = g.name;
+
+      div.appendChild(badge);
+      div.appendChild(name);
+
+      elGrid.appendChild(div);
+    });
+
+    // 如果剛抽到，標記 locked
+    if (pickedIdx !== null){
+      const el = elGrid.querySelector(`.topic[data-idx="${pickedIdx}"]`);
+      if (el){
+        el.classList.remove("active");
+        el.classList.add("locked");
+        // 已選的同時也要暗掉，但 locked 要亮，所以用 locked 覆蓋視覺
+        el.classList.remove("used");
+        const b = el.querySelector(".badge");
+        if (b) b.textContent = "本次";
+      }
     }
+
+    btnPick.disabled = spinning || candidates().length === 0;
+    btnStart.disabled = (pickedIdx === null);
   }
 
-  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-  async function spinAndPick(){
+  async function spinPick(){
     if (spinning) return;
     const pool = candidates();
-    if (pool.length === 0) return;
+    if (pool.length === 0) {
+      elPickedName.textContent = "（已全部抽完）";
+      elPickedHint.textContent = "請按「重置」重新開始";
+      btnStart.disabled = true;
+      return;
+    }
 
     spinning = true;
     btnPick.disabled = true;
+    btnStart.disabled = true;
 
-    // ===== 目標：整段約 3.5 秒 =====
+    // 抽之前先清掉上次 locked（但已用過的還是暗）
+    pickedIdx = null;
+    elPickedName.textContent = "抽選中…";
+    elPickedHint.textContent = "請稍等 3.5 秒";
+    render();
+
     const TOTAL_MS = 3500;
-
-    // 這個組合會讓節奏：先快（約 60ms）→ 慢到（約 320ms）
     const START_DELAY = 60;
     const END_DELAY = 320;
-
-    // 用總時間估算跳動步數（以平均延遲抓）
     const approxSteps = Math.max(10, Math.floor(TOTAL_MS / ((START_DELAY + END_DELAY) / 2)));
 
-    // 產生逐步變慢的 delay 序列（ease-out）
     const delays = [];
     for (let i=0;i<approxSteps;i++){
-      const t = i / (approxSteps - 1);          // 0..1
-      const eased = 1 - Math.pow(1 - t, 2.2);   // ease-out
-      const d = START_DELAY + (END_DELAY - START_DELAY) * eased;
-      delays.push(Math.round(d));
+      const t = i / (approxSteps - 1);
+      const eased = 1 - Math.pow(1 - t, 2.2);
+      delays.push(Math.round(START_DELAY + (END_DELAY - START_DELAY) * eased));
     }
 
-    // 依序跳亮（每次從候選中隨機挑）
     for (let i=0;i<delays.length;i++){
       const idx = pool[Math.floor(Math.random() * pool.length)];
       setActive(idx);
       await sleep(delays[i]);
     }
 
-    // 最後決選（避免最後一次剛好非定案）
+    // 最終結果
     const finalIdx = pool[Math.floor(Math.random() * pool.length)];
     setActive(finalIdx);
     await sleep(220);
 
-    // 記錄已抽
+    // 立刻把它記為「已用」：下方變暗
     const usedArr = loadUsed();
     usedArr.push(finalIdx);
     saveUsed(usedArr);
     saveLast(finalIdx);
 
-    // UI 顯示
+    pickedIdx = finalIdx;
     const g = GROUPS[finalIdx];
-    elPickedName.textContent = `【${g.name}】`;
-    elPickedLink.href = g.url;
-    elPickedLink.style.display = "inline-block";
-
-    // 恆亮（鎖定）
-    lockPicked(finalIdx);
-
-    // 更新剩餘
-    renderGrid();
+    elPickedName.textContent = g.name;
+    elPickedHint.textContent = "按 Start 才會進入這組題目";
 
     spinning = false;
-
-    // 讓主持人看清楚結果再跳（短暫停留）
-    setTimeout(() => {
-      window.location.href = g.url;
-    }, 600);
+    clearActive();
+    render();
   }
 
-  btnPick.addEventListener("click", spinAndPick);
+  btnPick.addEventListener("click", spinPick);
 
-  btnReset.addEventListener("click", () => {
+  btnStart.addEventListener("click", ()=>{
+    if (pickedIdx === null) return;
+    window.location.href = GROUPS[pickedIdx].url;
+  });
+
+  btnReset.addEventListener("click", ()=>{
     localStorage.removeItem(KEY_USED);
     localStorage.removeItem(KEY_LAST);
-    elPickedName.textContent = "（尚未抽）";
-    elPickedLink.style.display = "none";
+    pickedIdx = null;
     clearActive();
-    renderGrid();
+    elPickedName.textContent = "（尚未抽）";
+    elPickedHint.textContent = "請先按「抽選」";
+    render();
   });
 
-  btnOpenLast.addEventListener("click", () => {
-    const idx = loadLast();
-    if (idx === null || idx < 0 || idx >= GROUPS.length) return;
-    window.location.href = GROUPS[idx].url;
-  });
+  // 讓你重新整理後，上方能顯示「上一次抽到」(不自動跳)
+  (function initLast(){
+    const last = loadLast();
+    if (last !== null && last >= 0 && last < GROUPS.length){
+      elPickedName.textContent = `上次：${GROUPS[last].name}`;
+      elPickedHint.textContent = "可按「抽選」繼續抽新主題";
+    }
+  })();
 
-  renderGrid();
+  render();
 </script>
 </body>
 </html>
