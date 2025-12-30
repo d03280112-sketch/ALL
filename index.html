@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>主控台｜14 組抽選</title>
+  <title>主控台｜14 主題抽選</title>
   <style>
     body{
       margin:0;
@@ -43,34 +43,32 @@
     .topic{
       position:relative;
       border-radius:18px;
-      padding:18px 16px;
+      padding:22px 16px;
       border:1px solid #2a2a2a;
       background:#0f0f0f;
-      opacity:.30;                /* 原本暗的 */
+      opacity:.28;                /* 原本暗 */
       transform:scale(1);
       transition:opacity .12s linear, transform .12s linear, box-shadow .12s linear, border-color .12s linear;
       user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:74px;
+      text-align:center;
     }
     .topic .name{
-      font-size:28px;
+      font-size:30px;
       font-weight:1000;
       letter-spacing:.5px;
-      margin-bottom:8px;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
-    }
-    .topic .url{
-      font-size:12px;
-      opacity:.8;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      max-width:100%;
     }
 
     .topic.active{
       opacity:1;
-      transform:scale(1.03);
+      transform:scale(1.04);
       border-color:#00e5ff;
       box-shadow:0 0 18px rgba(0,229,255,.35);
     }
@@ -89,27 +87,22 @@
       opacity:.9;
     }
     .topic.locked .badge{background:#1a1200;border-color:#ffd400}
-    .topic.used{
-      opacity:.15;
-      filter:saturate(.7);
-    }
-    .topic.used.locked{opacity:1;filter:none;}
+    .topic.used{opacity:.12;}
+    .topic.used.locked{opacity:1;}
     .footerRow{
       display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:flex-start;
       margin-top:12px;
     }
-    a.link{
-      color:#00e5ff;text-decoration:none;font-weight:900
-    }
+    a.link{color:#00e5ff;text-decoration:none;font-weight:900}
     a.link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>🎲 主控台：14 主題抽選（跑馬燈）</h1>
+  <h1>🎲 主控台：14 主題抽選</h1>
   <div class="hint">
-    按「開始抽選」後，14 個主題會隨機亮起又暗下來，速度會慢慢放慢，最後停在抽中的主題並保持恆亮。<br/>
-    抽到後會自動跳到該主題頁面（GitHub Pages）。抽過的主題不會再被抽到，直到抽完可按重置。
+    按「開始抽選」後，主題會隨機亮起又暗下來，約 3.5 秒內逐步放慢並停在抽中的主題（恆亮）。<br/>
+    抽到後會自動跳到該主題頁面。抽過的主題不會再被抽到，直到抽完可按重置。
   </div>
 
   <div class="panel">
@@ -141,7 +134,7 @@
 </div>
 
 <script>
-  // ✅ 你的 14 組網址（已填好）
+  // ✅ 14 組網址（只用來跳轉，不在畫面顯示）
   const GROUPS = [
     { name: "文具",   url: "https://d03280112-sketch.github.io/pen/" },
     { name: "水果",   url: "https://d03280112-sketch.github.io/-fruit/" },
@@ -159,8 +152,8 @@
     { name: "職業",   url: "https://d03280112-sketch.github.io/Profession/" }
   ];
 
-  const KEY_USED = "quiz_used_groups_v2";
-  const KEY_LAST = "quiz_last_group_v2";
+  const KEY_USED = "quiz_used_groups_v3";
+  const KEY_LAST = "quiz_last_group_v3";
 
   const elRemain = document.getElementById("remain");
   const elPickedName = document.getElementById("pickedName");
@@ -187,6 +180,15 @@
     return Number.isFinite(n) ? n : null;
   }
 
+  function candidates(){
+    const used = new Set(loadUsed());
+    const out = [];
+    for (let i=0;i<GROUPS.length;i++){
+      if (!used.has(i)) out.push(i);
+    }
+    return out;
+  }
+
   function renderGrid(){
     const used = new Set(loadUsed());
     const remain = GROUPS.length - used.size;
@@ -207,15 +209,10 @@
       name.className = "name";
       name.textContent = g.name;
 
-      const url = document.createElement("div");
-      url.className = "url";
-      url.textContent = g.url;
-
       div.appendChild(badge);
       div.appendChild(name);
-      div.appendChild(url);
 
-      // 允許點擊直接開啟（方便測試）
+      // 允許點擊直接開啟（測試用）
       div.addEventListener("click", () => {
         if (spinning) return;
         window.location.href = g.url;
@@ -248,48 +245,46 @@
     }
   }
 
-  function pickCandidates(){
-    const used = new Set(loadUsed());
-    const candidates = [];
-    for (let i=0;i<GROUPS.length;i++){
-      if (!used.has(i)) candidates.push(i);
-    }
-    return candidates;
-  }
-
   function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   async function spinAndPick(){
     if (spinning) return;
-    const candidates = pickCandidates();
-    if (candidates.length === 0) return;
+    const pool = candidates();
+    if (pool.length === 0) return;
 
     spinning = true;
     btnPick.disabled = true;
 
-    // 跑馬燈參數：一開始快、逐步變慢
-    let delay = 60;          // 初始速度（越小越快）
-    const delayGrow = 1.12;  // 每次延遲乘上倍率 → 逐步放慢
-    const maxDelay = 420;    // 最慢停下來前的延遲
-    const minSteps = 28;     // 最少跳動次數（保證有跑一段）
-    const maxSteps = 55;     // 最多跳動次數（避免太久）
-    const steps = Math.floor(Math.random() * (maxSteps - minSteps + 1)) + minSteps;
+    // ===== 目標：整段約 3.5 秒 =====
+    const TOTAL_MS = 3500;
 
-    // 讓它真的「隨機亮起」：每次從候選裡隨機挑一個點亮
-    for (let s=0; s<steps; s++){
-      const idx = candidates[Math.floor(Math.random() * candidates.length)];
-      setActive(idx);
+    // 這個組合會讓節奏：先快（約 60ms）→ 慢到（約 320ms）
+    const START_DELAY = 60;
+    const END_DELAY = 320;
 
-      await sleep(delay);
-      delay = Math.min(maxDelay, Math.floor(delay * delayGrow));
+    // 用總時間估算跳動步數（以平均延遲抓）
+    const approxSteps = Math.max(10, Math.floor(TOTAL_MS / ((START_DELAY + END_DELAY) / 2)));
+
+    // 產生逐步變慢的 delay 序列（ease-out）
+    const delays = [];
+    for (let i=0;i<approxSteps;i++){
+      const t = i / (approxSteps - 1);          // 0..1
+      const eased = 1 - Math.pow(1 - t, 2.2);   // ease-out
+      const d = START_DELAY + (END_DELAY - START_DELAY) * eased;
+      delays.push(Math.round(d));
     }
 
-    // 最後決選：再從候選裡選一個當結果（可避免最後一次剛好是舊值）
-    const finalIdx = candidates[Math.floor(Math.random() * candidates.length)];
+    // 依序跳亮（每次從候選中隨機挑）
+    for (let i=0;i<delays.length;i++){
+      const idx = pool[Math.floor(Math.random() * pool.length)];
+      setActive(idx);
+      await sleep(delays[i]);
+    }
 
-    // 做一個小小「定格」效果
+    // 最後決選（避免最後一次剛好非定案）
+    const finalIdx = pool[Math.floor(Math.random() * pool.length)];
     setActive(finalIdx);
-    await sleep(Math.min(520, delay + 120));
+    await sleep(220);
 
     // 記錄已抽
     const usedArr = loadUsed();
@@ -306,15 +301,15 @@
     // 恆亮（鎖定）
     lockPicked(finalIdx);
 
-    // 更新剩餘/狀態
+    // 更新剩餘
     renderGrid();
 
     spinning = false;
 
-    // 稍等一下讓主持人看到結果，再跳轉
+    // 讓主持人看清楚結果再跳（短暫停留）
     setTimeout(() => {
       window.location.href = g.url;
-    }, 700);
+    }, 600);
   }
 
   btnPick.addEventListener("click", spinAndPick);
