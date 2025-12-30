@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>主控台｜14 主題抽選（按 Start 才跳轉）</title>
+  <title>ALL 主控台</title>
   <style>
     body{
       margin:0;
@@ -12,14 +12,13 @@
       color:#fff;
     }
     .wrap{max-width:1100px;margin:0 auto;padding:26px;}
-    h1{margin:0 0 10px;font-size:30px;}
-    .hint{opacity:.8;line-height:1.7}
 
     .panel{
       background:#141414;border:1px solid #2a2a2a;border-radius:18px;
       padding:18px;margin:14px 0;
     }
 
+    /* 上方顯示區 */
     .topPick{
       display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;
     }
@@ -32,20 +31,28 @@
       background:#0f0f0f;
     }
     .pickLabel{opacity:.75}
+
+    /* ✅ 上方主題字：更大、置中、舞台感 */
     .pickName{
-      margin-top:8px;
-      font-size:56px;
+      margin-top:10px;
+      font-size:88px;
       font-weight:1000;
-      letter-spacing:1px;
+      letter-spacing:2px;
       color:#00e5ff;
-      text-shadow:0 0 18px rgba(0,229,255,.35);
-      line-height:1.1;
+      text-shadow:
+        0 0 18px rgba(0,229,255,.55),
+        0 0 36px rgba(0,229,255,.35),
+        0 0 60px rgba(0,229,255,.18);
+      line-height:1.05;
       word-break:break-word;
+      text-align:center;
+      transition: transform .08s linear, filter .08s linear;
     }
     .pickSub{
       margin-top:10px;
       opacity:.85;
-      font-weight:800;
+      font-weight:900;
+      text-align:center;
     }
 
     .btnRow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
@@ -58,6 +65,7 @@
     #btnReset{background:#222;color:#fff;border:1px solid #333}
     button:disabled{opacity:.45;cursor:not-allowed}
 
+    /* 14 主題格 */
     .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -69,7 +77,7 @@
       padding:20px 16px;
       border:1px solid #2a2a2a;
       background:#101010;
-      opacity:1;                /* 一開始都亮 */
+      opacity:1;
       transition:opacity .12s linear, transform .12s linear, box-shadow .12s linear, border-color .12s linear;
       user-select:none;
       display:flex;
@@ -88,28 +96,21 @@
       text-overflow:ellipsis;
       max-width:100%;
     }
-
-    /* 抽選過的：變暗 */
     .topic.used{
       opacity:.18;
       filter:saturate(.6);
     }
-
-    /* 抽選動畫亮起 */
     .topic.active{
       transform:scale(1.04);
       border-color:#00e5ff;
       box-shadow:0 0 18px rgba(0,229,255,.35);
     }
-
-    /* 抽到結果：恆亮 */
     .topic.locked{
       opacity:1;
       border-color:#ffd400;
       box-shadow:0 0 24px rgba(255,212,0,.55);
       transform:scale(1.03);
     }
-
     .badge{
       position:absolute;top:10px;right:10px;
       font-size:12px;font-weight:1000;
@@ -119,11 +120,58 @@
     }
     .topic.used .badge{background:#111;border-color:#222;opacity:.8}
     .topic.locked .badge{background:#1a1200;border-color:#ffd400}
+
+    /* ✅ 全畫面置中抽選遮罩：平常不顯示 */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.78);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:99999;
+      padding:24px;
+    }
+    .overlay.show{display:flex;}
+
+    .overlayText{
+      font-size:min(14vw, 140px);
+      font-weight:1000;
+      letter-spacing:2px;
+      text-align:center;
+      color:#00e5ff;
+      text-shadow:
+        0 0 18px rgba(0,229,255,.65),
+        0 0 40px rgba(0,229,255,.4),
+        0 0 80px rgba(0,229,255,.18);
+      line-height:1.05;
+      transform:scale(1);
+    }
+
+    /* 🎤 呼吸感：抽選中 */
+    .breathing{
+      animation: breathe .55s ease-in-out infinite;
+    }
+    @keyframes breathe{
+      0%{ transform:scale(1); filter:brightness(1); }
+      50%{ transform:scale(1.035); filter:brightness(1.12); }
+      100%{ transform:scale(1); filter:brightness(1); }
+    }
+
+    /* 🔔 停下瞬間：閃一下/發光 */
+    .flash{
+      animation: flashGlow .65s ease-out 1;
+    }
+    @keyframes flashGlow{
+      0%{ transform:scale(1); filter:brightness(1); }
+      25%{ transform:scale(1.07); filter:brightness(1.55); }
+      55%{ transform:scale(1.02); filter:brightness(1.15); }
+      100%{ transform:scale(1); filter:brightness(1); }
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
-
   <div class="panel topPick">
     <div class="pickBox">
       <div class="pickLabel">目前抽到的選項</div>
@@ -139,13 +187,16 @@
   </div>
 
   <div class="panel">
-    <div style="font-weight:1000;margin-bottom:8px">14 主題</div>
     <div class="grid" id="grid"></div>
   </div>
 </div>
 
+<!-- ✅ 全畫面置中抽選遮罩 -->
+<div class="overlay" id="overlay">
+  <div class="overlayText" id="overlayText">抽選中</div>
+</div>
+
 <script>
-  // 14 組（只顯示 name，不顯示 url）
   const GROUPS = [
     { name: "文具",   url: "https://d03280112-sketch.github.io/pen/" },
     { name: "水果",   url: "https://d03280112-sketch.github.io/-fruit/" },
@@ -163,8 +214,8 @@
     { name: "職業",   url: "https://d03280112-sketch.github.io/Profession/" }
   ];
 
-  const KEY_USED = "all_used_groups_v4";
-  const KEY_LAST = "all_last_pick_v4";
+  const KEY_USED = "all_used_groups_v5";
+  const KEY_LAST = "all_last_pick_v5";
 
   const elGrid = document.getElementById("grid");
   const btnPick = document.getElementById("btnPick");
@@ -172,6 +223,9 @@
   const btnReset = document.getElementById("btnReset");
   const elPickedName = document.getElementById("pickedName");
   const elPickedHint = document.getElementById("pickedHint");
+
+  const overlay = document.getElementById("overlay");
+  const overlayText = document.getElementById("overlayText");
 
   let spinning = false;
   let currentActive = null;
@@ -184,7 +238,6 @@
     } catch { return []; }
   }
   function saveUsed(arr){ localStorage.setItem(KEY_USED, JSON.stringify(arr)); }
-
   function saveLast(idx){ localStorage.setItem(KEY_LAST, String(idx)); }
   function loadLast(){
     const v = localStorage.getItem(KEY_LAST);
@@ -207,12 +260,18 @@
     if (el) el.classList.remove("active");
     currentActive = null;
   }
+
+  // ✅ 同步上方 + 全畫面文字
   function setActive(idx){
     if (currentActive === idx) return;
     clearActive();
+
     const el = elGrid.querySelector(`.topic[data-idx="${idx}"]`);
     if (el) el.classList.add("active");
     currentActive = idx;
+
+    elPickedName.textContent = GROUPS[idx].name;
+    overlayText.textContent = GROUPS[idx].name;
   }
 
   function render(){
@@ -238,13 +297,12 @@
       elGrid.appendChild(div);
     });
 
-    // 如果剛抽到，標記 locked
+    // 抽到結果：恆亮（但仍算已選）
     if (pickedIdx !== null){
       const el = elGrid.querySelector(`.topic[data-idx="${pickedIdx}"]`);
       if (el){
         el.classList.remove("active");
         el.classList.add("locked");
-        // 已選的同時也要暗掉，但 locked 要亮，所以用 locked 覆蓋視覺
         el.classList.remove("used");
         const b = el.querySelector(".badge");
         if (b) b.textContent = "本次";
@@ -257,12 +315,31 @@
 
   function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
+  function showOverlay(){
+    overlay.classList.add("show");
+    overlayText.classList.add("breathing");
+    elPickedName.classList.add("breathing");
+    elPickedHint.textContent = ""; // 不顯示「抽選中」
+  }
+  function hideOverlay(){
+    overlay.classList.remove("show");
+    overlayText.classList.remove("breathing");
+    elPickedName.classList.remove("breathing");
+  }
+  function flashFinal(){
+    overlayText.classList.remove("flash");
+    elPickedName.classList.remove("flash");
+    void overlayText.offsetWidth; // reflow
+    overlayText.classList.add("flash");
+    elPickedName.classList.add("flash");
+  }
+
   async function spinPick(){
     if (spinning) return;
     const pool = candidates();
     if (pool.length === 0) {
-      elPickedName.textContent = "（已全部抽完）";
-      elPickedHint.textContent = "請按「重置」重新開始";
+      elPickedName.textContent = "";
+      elPickedHint.textContent = "";
       btnStart.disabled = true;
       return;
     }
@@ -271,12 +348,14 @@
     btnPick.disabled = true;
     btnStart.disabled = true;
 
-    // 抽之前先清掉上次 locked（但已用過的還是暗）
+    // 抽之前先清掉上次 locked
     pickedIdx = null;
-    elPickedName.textContent = "抽選中…";
-    elPickedHint.textContent = "請稍等 3.5 秒";
     render();
 
+    // ✅ 開啟全畫面置中抽選
+    showOverlay();
+
+    // 3.5 秒跑馬燈
     const TOTAL_MS = 3500;
     const START_DELAY = 60;
     const END_DELAY = 320;
@@ -300,20 +379,29 @@
     setActive(finalIdx);
     await sleep(220);
 
-    // 立刻把它記為「已用」：下方變暗
+    // 記為已選（下方變暗）
     const usedArr = loadUsed();
     usedArr.push(finalIdx);
     saveUsed(usedArr);
     saveLast(finalIdx);
 
     pickedIdx = finalIdx;
-    const g = GROUPS[finalIdx];
-    elPickedName.textContent = g.name;
-    elPickedHint.textContent = "按 Start 才會進入這組題目";
+
+    // 🔔 停下瞬間閃一下
+    flashFinal();
+
+    // 停住 0.55 秒讓大家看清楚
+    await sleep(550);
+
+    // 關閉全畫面遮罩，但上方保留結果
+    hideOverlay();
 
     spinning = false;
     clearActive();
     render();
+
+    // Start 才跳轉
+    elPickedHint.textContent = "";
   }
 
   btnPick.addEventListener("click", spinPick);
@@ -329,16 +417,22 @@
     pickedIdx = null;
     clearActive();
     elPickedName.textContent = "（尚未抽）";
-    elPickedHint.textContent = "請先按「抽選」";
+    overlayText.textContent = "";
+    elPickedHint.textContent = "";
+    hideOverlay();
     render();
   });
 
-  // 讓你重新整理後，上方能顯示「上一次抽到」(不自動跳)
+  // 重新整理後顯示上次結果（不自動跳）
   (function initLast(){
     const last = loadLast();
     if (last !== null && last >= 0 && last < GROUPS.length){
-      elPickedName.textContent = `上次：${GROUPS[last].name}`;
-      elPickedHint.textContent = "可按「抽選」繼續抽新主題";
+      elPickedName.textContent = GROUPS[last].name;
+      overlayText.textContent = GROUPS[last].name;
+      elPickedHint.textContent = "";
+    } else {
+      overlayText.textContent = "";
+      elPickedHint.textContent = "";
     }
   })();
 
