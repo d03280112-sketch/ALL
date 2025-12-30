@@ -3,65 +3,140 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>主控台｜隨機抽 14 組題目</title>
+  <title>主控台｜14 組抽選</title>
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif;background:#0b0b0b;color:#fff;}
-    .wrap{max-width:980px;margin:0 auto;padding:24px;}
-    h1{margin:0 0 10px;font-size:28px;}
-    .hint{opacity:.8;line-height:1.6}
-    .card{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:18px;margin:14px 0;}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-    button{border:0;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;background:#00e5ff;color:#001015}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif;
+      background:#0b0b0b;
+      color:#fff;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:26px;}
+    h1{margin:0 0 10px;font-size:30px;}
+    .hint{opacity:.8;line-height:1.7}
+    .panel{
+      background:#141414;border:1px solid #2a2a2a;border-radius:18px;
+      padding:18px;margin:14px 0;
+    }
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+    button{
+      border:0;border-radius:16px;padding:12px 18px;font-weight:900;cursor:pointer;
+      background:#00e5ff;color:#001015;font-size:18px;
+    }
     button.secondary{background:#ffd400;color:#1a1200}
     button.ghost{background:#222;color:#fff;border:1px solid #333}
     button:disabled{opacity:.45;cursor:not-allowed}
-    .big{font-size:56px;font-weight:1000;letter-spacing:1px;color:#ffd400;text-shadow:0 0 12px rgba(255,212,0,.55)}
-    .now{font-size:18px;font-weight:900}
-    .link{color:#00e5ff;text-decoration:none}
-    .link:hover{text-decoration:underline}
-    .list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:12px}
-    .pill{background:#0f0f0f;border:1px solid #2a2a2a;border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;gap:10px;align-items:center}
-    .pill.used{opacity:.35}
-    .tag{font-size:12px;padding:4px 8px;border-radius:999px;background:#222;border:1px solid #333;white-space:nowrap}
+
+    .big{
+      font-size:58px;font-weight:1000;letter-spacing:1px;color:#ffd400;
+      text-shadow:0 0 12px rgba(255,212,0,.55);
+      line-height:1;
+    }
+
+    /* 14 主題文字區 */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin-top:12px;
+    }
+    .topic{
+      position:relative;
+      border-radius:18px;
+      padding:18px 16px;
+      border:1px solid #2a2a2a;
+      background:#0f0f0f;
+      opacity:.30;                /* 原本暗的 */
+      transform:scale(1);
+      transition:opacity .12s linear, transform .12s linear, box-shadow .12s linear, border-color .12s linear;
+      user-select:none;
+    }
+    .topic .name{
+      font-size:28px;
+      font-weight:1000;
+      letter-spacing:.5px;
+      margin-bottom:8px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .topic .url{
+      font-size:12px;
+      opacity:.8;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .topic.active{
+      opacity:1;
+      transform:scale(1.03);
+      border-color:#00e5ff;
+      box-shadow:0 0 18px rgba(0,229,255,.35);
+    }
+
+    .topic.locked{
+      opacity:1;
+      border-color:#ffd400;
+      box-shadow:0 0 26px rgba(255,212,0,.55);
+    }
+
+    .badge{
+      position:absolute;top:10px;right:10px;
+      font-size:12px;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      background:#222;border:1px solid #333;
+      opacity:.9;
+    }
+    .topic.locked .badge{background:#1a1200;border-color:#ffd400}
+    .topic.used{
+      opacity:.15;
+      filter:saturate(.7);
+    }
+    .topic.used.locked{opacity:1;filter:none;}
+    .footerRow{
+      display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:flex-start;
+      margin-top:12px;
+    }
+    a.link{
+      color:#00e5ff;text-decoration:none;font-weight:900
+    }
+    a.link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>🎲 主控台：隨機抽 14 組題目（不重複）</h1>
+  <h1>🎲 主控台：14 主題抽選（跑馬燈）</h1>
   <div class="hint">
-    按「隨機抽一組」會從未抽過的組別抽出 1 組並直接開啟該組的 GitHub Pages。
-    抽過的會自動扣掉，直到抽完。<br/>
-    小提示：抽完 14 組後可按「重置」全部回來。
+    按「開始抽選」後，14 個主題會隨機亮起又暗下來，速度會慢慢放慢，最後停在抽中的主題並保持恆亮。<br/>
+    抽到後會自動跳到該主題頁面（GitHub Pages）。抽過的主題不會再被抽到，直到抽完可按重置。
   </div>
 
-  <div class="card">
+  <div class="panel">
     <div class="row">
       <div>
-        <div style="opacity:.7">剩餘組數</div>
+        <div style="opacity:.7">剩餘主題數</div>
         <div class="big" id="remain">14</div>
       </div>
-      <div style="min-width:340px">
+      <div style="min-width:360px">
         <div style="opacity:.7">本次抽到</div>
-        <div class="now" id="pickedName">（尚未抽）</div>
+        <div style="font-size:20px;font-weight:1000" id="pickedName">（尚未抽）</div>
         <div style="margin-top:6px">
-          <a class="link" id="pickedLink" href="#" target="_self" style="display:none">開啟此組</a>
+          <a class="link" id="pickedLink" href="#" target="_self" style="display:none">開啟此主題</a>
         </div>
       </div>
     </div>
 
-    <div class="row" style="justify-content:flex-start;margin-top:14px">
-      <button id="btnPick">隨機抽一組</button>
+    <div class="footerRow">
+      <button id="btnPick">開始抽選</button>
       <button class="secondary" id="btnReset">重置（全部回來）</button>
-      <button class="ghost" id="btnOpenLast">開啟上一次抽到的組</button>
+      <button class="ghost" id="btnOpenLast">開啟上一次抽到的主題</button>
     </div>
   </div>
 
-  <div class="card">
-    <div style="font-weight:900;margin-bottom:8px">14 組清單（可點連結）</div>
-    <div class="hint" style="margin-bottom:10px">
-      抽過的會變淡並標示「已抽」。你也可以手動點「開啟」測試各組是否正常。
-    </div>
-    <div class="list" id="list"></div>
+  <div class="panel">
+    <div style="font-weight:1000;margin-bottom:8px">14 主題</div>
+    <div class="grid" id="grid"></div>
   </div>
 </div>
 
@@ -84,16 +159,19 @@
     { name: "職業",   url: "https://d03280112-sketch.github.io/Profession/" }
   ];
 
-  const KEY_USED = "quiz_used_groups_v1";
-  const KEY_LAST = "quiz_last_group_v1";
+  const KEY_USED = "quiz_used_groups_v2";
+  const KEY_LAST = "quiz_last_group_v2";
 
   const elRemain = document.getElementById("remain");
   const elPickedName = document.getElementById("pickedName");
   const elPickedLink = document.getElementById("pickedLink");
-  const elList = document.getElementById("list");
+  const elGrid = document.getElementById("grid");
   const btnPick = document.getElementById("btnPick");
   const btnReset = document.getElementById("btnReset");
   const btnOpenLast = document.getElementById("btnOpenLast");
+
+  let spinning = false;
+  let currentActive = null;
 
   function loadUsed(){
     try {
@@ -109,82 +187,145 @@
     return Number.isFinite(n) ? n : null;
   }
 
-  function render(){
+  function renderGrid(){
     const used = new Set(loadUsed());
     const remain = GROUPS.length - used.size;
     elRemain.textContent = String(remain);
-    btnPick.disabled = (remain <= 0);
+    btnPick.disabled = (remain <= 0) || spinning;
 
-    elList.innerHTML = "";
+    elGrid.innerHTML = "";
     GROUPS.forEach((g, i) => {
       const div = document.createElement("div");
-      div.className = "pill" + (used.has(i) ? " used" : "");
+      div.className = "topic" + (used.has(i) ? " used" : "");
+      div.dataset.idx = String(i);
 
-      const left = document.createElement("div");
-      left.style.minWidth = "0";
-      left.innerHTML = `
-        <div style="font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
-        <div style="opacity:.75;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.url}</div>
-      `;
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = used.has(i) ? "已抽" : "未抽";
 
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.gap = "8px";
-      right.style.alignItems = "center";
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = g.name;
 
-      const tag = document.createElement("div");
-      tag.className = "tag";
-      tag.textContent = used.has(i) ? "已抽" : "未抽";
+      const url = document.createElement("div");
+      url.className = "url";
+      url.textContent = g.url;
 
-      const a = document.createElement("a");
-      a.className = "link";
-      a.href = g.url;
-      a.target = "_self";
-      a.textContent = "開啟";
-      a.style.fontSize = "12px";
+      div.appendChild(badge);
+      div.appendChild(name);
+      div.appendChild(url);
 
-      right.appendChild(tag);
-      right.appendChild(a);
-      div.appendChild(left);
-      div.appendChild(right);
-      elList.appendChild(div);
+      // 允許點擊直接開啟（方便測試）
+      div.addEventListener("click", () => {
+        if (spinning) return;
+        window.location.href = g.url;
+      });
+
+      elGrid.appendChild(div);
     });
   }
 
-  function pickRandom(){
-    const usedArr = loadUsed();
-    const used = new Set(usedArr);
+  function clearActive(){
+    if (currentActive === null) return;
+    const el = elGrid.querySelector(`.topic[data-idx="${currentActive}"]`);
+    if (el) el.classList.remove("active");
+    currentActive = null;
+  }
 
+  function setActive(idx){
+    if (currentActive === idx) return;
+    clearActive();
+    const el = elGrid.querySelector(`.topic[data-idx="${idx}"]`);
+    if (el) el.classList.add("active");
+    currentActive = idx;
+  }
+
+  function lockPicked(idx){
+    const el = elGrid.querySelector(`.topic[data-idx="${idx}"]`);
+    if (el) {
+      el.classList.remove("active");
+      el.classList.add("locked");
+    }
+  }
+
+  function pickCandidates(){
+    const used = new Set(loadUsed());
     const candidates = [];
     for (let i=0;i<GROUPS.length;i++){
       if (!used.has(i)) candidates.push(i);
     }
+    return candidates;
+  }
+
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  async function spinAndPick(){
+    if (spinning) return;
+    const candidates = pickCandidates();
     if (candidates.length === 0) return;
 
-    const idx = candidates[Math.floor(Math.random() * candidates.length)];
-    usedArr.push(idx);
-    saveUsed(usedArr);
-    saveLast(idx);
+    spinning = true;
+    btnPick.disabled = true;
 
-    const g = GROUPS[idx];
+    // 跑馬燈參數：一開始快、逐步變慢
+    let delay = 60;          // 初始速度（越小越快）
+    const delayGrow = 1.12;  // 每次延遲乘上倍率 → 逐步放慢
+    const maxDelay = 420;    // 最慢停下來前的延遲
+    const minSteps = 28;     // 最少跳動次數（保證有跑一段）
+    const maxSteps = 55;     // 最多跳動次數（避免太久）
+    const steps = Math.floor(Math.random() * (maxSteps - minSteps + 1)) + minSteps;
+
+    // 讓它真的「隨機亮起」：每次從候選裡隨機挑一個點亮
+    for (let s=0; s<steps; s++){
+      const idx = candidates[Math.floor(Math.random() * candidates.length)];
+      setActive(idx);
+
+      await sleep(delay);
+      delay = Math.min(maxDelay, Math.floor(delay * delayGrow));
+    }
+
+    // 最後決選：再從候選裡選一個當結果（可避免最後一次剛好是舊值）
+    const finalIdx = candidates[Math.floor(Math.random() * candidates.length)];
+
+    // 做一個小小「定格」效果
+    setActive(finalIdx);
+    await sleep(Math.min(520, delay + 120));
+
+    // 記錄已抽
+    const usedArr = loadUsed();
+    usedArr.push(finalIdx);
+    saveUsed(usedArr);
+    saveLast(finalIdx);
+
+    // UI 顯示
+    const g = GROUPS[finalIdx];
     elPickedName.textContent = `【${g.name}】`;
     elPickedLink.href = g.url;
     elPickedLink.style.display = "inline-block";
 
-    render();
+    // 恆亮（鎖定）
+    lockPicked(finalIdx);
 
-    // 直接跳到該組（同分頁）
-    window.location.href = g.url;
+    // 更新剩餘/狀態
+    renderGrid();
+
+    spinning = false;
+
+    // 稍等一下讓主持人看到結果，再跳轉
+    setTimeout(() => {
+      window.location.href = g.url;
+    }, 700);
   }
 
-  btnPick.addEventListener("click", pickRandom);
+  btnPick.addEventListener("click", spinAndPick);
 
   btnReset.addEventListener("click", () => {
     localStorage.removeItem(KEY_USED);
     localStorage.removeItem(KEY_LAST);
     elPickedName.textContent = "（尚未抽）";
     elPickedLink.style.display = "none";
-    render();
+    clearActive();
+    renderGrid();
   });
 
   btnOpenLast.addEventListener("click", () => {
@@ -193,7 +334,7 @@
     window.location.href = GROUPS[idx].url;
   });
 
-  render();
+  renderGrid();
 </script>
 </body>
 </html>
